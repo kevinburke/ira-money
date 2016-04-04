@@ -66,13 +66,18 @@ func getCurrentPrice(stock string) (float64, error) {
 	return strconv.ParseFloat(records[0][1], 64)
 }
 
+func getExponent(p float64) float64 {
+	return -1 * math.Sqrt(math.Pi) * ErfInv(1-p)
+}
+
 // implementation taken from http://quant.stackexchange.com/a/25074/19960
 func determinePrice(annualizedVolatility float64, days int, currentPrice float64, p float64) (float64, error) {
 	if p < 0 || p > 1 {
-		return -1, fmt.Errorf("invalid probability: %f", p)
+		return -1, fmt.Errorf("invalid probability: %v", p)
 	}
 	years := float64(days) / 365
-	return currentPrice * math.Pow((1+annualizedVolatility), -0.0314192*math.Sqrt(years)), nil
+	exponent := getExponent(p)
+	return currentPrice * math.Pow((1+annualizedVolatility), exponent*math.Sqrt(years)), nil
 }
 
 func main() {
