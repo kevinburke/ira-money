@@ -20,6 +20,20 @@ needed a trial account.
 Download the JSON dataset and save it to `data/<stock-name>.json`. This file
 will get loaded when `main.go` runs.
 
+## Running the file
+
+Run `go run erf.go main.go --stock=ACWV --total=400`
+
+```
+the standard deviation is: 0.677742
+annualized: 10.758814
+current price: 72.77
+Based on this stock's volatility, you should set a limit order for: $67.35.
+
+Compared with buying it at the current price, you'll be able to buy 6.1 extra
+shares (a value of $409.83)
+```
+
 ## Definitions
 
 To calculate annualized volatility, I took the standard
