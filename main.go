@@ -37,7 +37,7 @@ func getStandardDeviation(dataArray [][]interface{}) float64 {
 	for i := len(dataArray) - 2; i >= 0; i-- {
 		data := dataArray[i]
 		currentPrice := data[4].(float64)
-		percentChange := 100 * (currentPrice - yesterdaysPrice) / (yesterdaysPrice)
+		percentChange := (currentPrice - yesterdaysPrice) / (yesterdaysPrice)
 		//fmt.Println(percentChange)
 		//fmt.Println(data[0])
 		//fmt.Println(data[4])
@@ -83,9 +83,13 @@ func determinePrice(annualizedVolatility float64, days int, currentPrice float64
 func main() {
 	stock := flag.String("stock", "", "Which stock to evaluate")
 	total := flag.Int("total", 0, "How many dollars you wish to spend")
+	percent := flag.Float64("percent", 0.99, "Percent chance of executing the order (between 0 and 1)")
 	flag.Parse()
 	if *stock == "" {
 		log.Fatal(errors.New("Usage: main.go --stock=AAPL"))
+	}
+	if *percent > 1 || *percent < 0 {
+		log.Fatalf("Percentage must be between 0 and 1, was %f", *percent)
 	}
 	f, err := os.Open(fmt.Sprintf("data/%s.json", strings.ToLower(*stock)))
 	checkError(err)
@@ -99,7 +103,7 @@ func main() {
 	currentPrice, err := getCurrentPrice(*stock)
 	checkError(err)
 	fmt.Println("current price:", currentPrice)
-	limitPrice, err := determinePrice(annualized, 365, currentPrice, 0.98)
+	limitPrice, err := determinePrice(annualized, 365, currentPrice, *percent)
 	checkError(err)
 	shares := float64(*total) / limitPrice
 	diff := shares - float64(*total)/currentPrice
