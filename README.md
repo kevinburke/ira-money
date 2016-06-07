@@ -22,7 +22,7 @@ will get loaded when `main.go` runs.
 
 ## Running the file
 
-Run `go run erf.go main.go --stock=ACWV --total=400`
+Run `go run erf.go main.go --stock=AAPL --total=400`
 
 ```
 the standard deviation is: 0.677742
