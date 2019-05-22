@@ -14,8 +14,7 @@ of having that order execute in the next 365 days.
 ## Getting Data
 
 To measure annualized volatility, you'll need historical stock data. I was able
-to find it using the EOD dataset from [Quandl](https://quandl.com). I only
-needed a trial account.
+to find it using the EOD dataset from [Alphavantage](https://alphavantage.co).
 
 Download the JSON dataset and save it to `data/<stock-name>.json`. This file
 will get loaded when `main.go` runs.

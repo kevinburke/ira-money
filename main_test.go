@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"math"
 	"testing"
 )
 
@@ -24,6 +25,6 @@ func TestDeterminePrice(t *testing.T) {
 }
 
 func TestGetExponent(t *testing.T) {
-	fmt.Println(getExponent(0.98))
+	fmt.Println(90.13 * math.Pow((1+0.099756), -0.0314192))
 	t.Fail()
 }

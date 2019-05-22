@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"encoding/csv"
 	"encoding/json"
 	"errors"
@@ -13,14 +14,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/GaryBoone/GoStats/stats"
+	"gonum.org/v1/gonum/stat"
 )
-
-func checkError(err error) {
-	if err != nil {
-		log.Fatal(err)
-	}
-}
 
 type Dataset struct {
 	Data [][]interface{} `json:"data"`
@@ -30,6 +25,28 @@ type Response struct {
 	Dataset Dataset `json:"dataset"`
 }
 
+func checkError(err error) {
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
+func getCSVStandardDeviation(prices []int64) float64 {
+	avgs := make([]float64, 0)
+	currentPrice := float64(prices[len(prices)-1])
+	maxDiff := float64(-100)
+	for i := len(prices) - 2; i >= 0; i-- {
+		yesterdaysPrice := float64(prices[i])
+		percentChange := math.Log(currentPrice / yesterdaysPrice)
+		if math.Abs(percentChange) > maxDiff {
+			maxDiff = math.Abs(percentChange)
+		}
+		avgs = append(avgs, percentChange)
+		currentPrice = yesterdaysPrice
+	}
+	return stat.StdDev(avgs, nil)
+}
+
 // procedure taken from http://www.fool.com/knowledge-center/2015/09/12/how-to-calculate-annualized-volatility.aspx
 func getStandardDeviation(dataArray [][]interface{}) float64 {
 	yesterdaysPrice := dataArray[len(dataArray)-1][4].(float64)
@@ -37,15 +54,11 @@ func getStandardDeviation(dataArray [][]interface{}) float64 {
 	for i := len(dataArray) - 2; i >= 0; i-- {
 		data := dataArray[i]
 		currentPrice := data[4].(float64)
-		percentChange := (currentPrice - yesterdaysPrice) / (yesterdaysPrice)
-		//fmt.Println(percentChange)
-		//fmt.Println(data[0])
-		//fmt.Println(data[4])
-		//fmt.Printf("%s, price: %f, change: %f\n", data[0], currentPrice, percentChange)
+		percentChange := math.Log(currentPrice / yesterdaysPrice)
 		avgs = append(avgs, percentChange)
 		yesterdaysPrice = currentPrice
 	}
-	return stats.StatsPopulationStandardDeviation(avgs)
+	return stat.StdDev(avgs, nil)
 }
 
 func getCurrentPrice(stock string) (float64, error) {
@@ -84,6 +97,7 @@ func main() {
 	stock := flag.String("stock", "", "Which stock to evaluate")
 	total := flag.Int("total", 0, "How many dollars you wish to spend")
 	percent := flag.Float64("percent", 0.99, "Percent chance of executing the order (between 0 and 1)")
+	useCSV := flag.Bool("csv", false, "CSV mode")
 	flag.Parse()
 	if *stock == "" {
 		log.Fatal(errors.New("Usage: main.go --stock=AAPL"))
@@ -91,17 +105,34 @@ func main() {
 	if *percent > 1 || *percent < 0 {
 		log.Fatalf("Percentage must be between 0 and 1, was %f", *percent)
 	}
-	f, err := os.Open(fmt.Sprintf("data/%s.json", strings.ToLower(*stock)))
-	checkError(err)
-	var r Response
-	err = json.NewDecoder(f).Decode(&r)
-	checkError(err)
-	stddev := getStandardDeviation(r.Dataset.Data)
+	var stddev float64
+	var currentPrice float64
+	if *useCSV {
+		f, err := os.Open(fmt.Sprintf("data/%s.csv", strings.ToLower(*stock)))
+		checkError(err)
+		bs := bufio.NewScanner(f)
+		prices := make([]int64, 0)
+		for bs.Scan() {
+			parts := strings.Split(bs.Text(), " ")
+			price, err := strconv.ParseInt(parts[1], 10, 64)
+			if err != nil {
+				log.Fatal(err)
+			}
+			prices = append(prices, price)
+		}
+		stddev = getCSVStandardDeviation(prices)
+		currentPrice = float64(prices[len(prices)-1]) / 10000
+	} else {
+		f, err := os.Open(fmt.Sprintf("data/%s.json", strings.ToLower(*stock)))
+		checkError(err)
+		var r Response
+		err = json.NewDecoder(f).Decode(&r)
+		checkError(err)
+		stddev = getStandardDeviation(r.Dataset.Data)
+	}
 	fmt.Printf("the standard deviation is: %f\n", stddev)
 	annualized := stddev * math.Sqrt(252)
-	fmt.Printf("annualized: %f\n", annualized)
-	currentPrice, err := getCurrentPrice(*stock)
-	checkError(err)
+	fmt.Printf("annualized: %f%%\n", annualized*100)
 	fmt.Println("current price:", currentPrice)
 	limitPrice, err := determinePrice(annualized, 365, currentPrice, *percent)
 	checkError(err)
