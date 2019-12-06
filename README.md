@@ -11,6 +11,9 @@ go run erf.go main.go --stock={STOCK}
 This will print out the limit order value you should set to have a ~98% chance
 of having that order execute in the next 365 days.
 
+Note this price will probably be pretty close to the current price! You don't
+actually save a lot by using this strategy. But your limit orders will execute.
+
 ## Getting Data
 
 To measure annualized volatility, you'll need historical stock data. I was able
