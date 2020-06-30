@@ -49,6 +49,9 @@ func getCSVStandardDeviation(prices []int64) float64 {
 
 // procedure taken from http://www.fool.com/knowledge-center/2015/09/12/how-to-calculate-annualized-volatility.aspx
 func getStandardDeviation(dataArray [][]interface{}) float64 {
+	if len(dataArray) == 0 {
+		panic("no entries in data array")
+	}
 	yesterdaysPrice := dataArray[len(dataArray)-1][4].(float64)
 	var avgs []float64
 	for i := len(dataArray) - 2; i >= 0; i-- {

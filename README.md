@@ -26,6 +26,8 @@ will get loaded when `main.go` runs.
 
 Run `go run erf.go main.go --stock=AAPL --total=400`
 
+You may need to use `--csv` mode.
+
 ```
 the standard deviation is: 0.677742
 annualized: 10.758814
