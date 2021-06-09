@@ -101,6 +101,7 @@ func main() {
 	total := flag.Int("total", 0, "How many dollars you wish to spend")
 	percent := flag.Float64("percent", 0.99, "Percent chance of executing the order (between 0 and 1)")
 	useCSV := flag.Bool("csv", false, "CSV mode")
+	days := flag.Int("days", 365, "Number of days in which you want the order to execute")
 	flag.Parse()
 	if *stock == "" {
 		log.Fatal(errors.New("Usage: main.go --stock=AAPL"))
@@ -134,10 +135,11 @@ func main() {
 		stddev = getStandardDeviation(r.Dataset.Data)
 	}
 	fmt.Printf("the standard deviation is: %f\n", stddev)
+	// 252 trading days in a year
 	annualized := stddev * math.Sqrt(252)
-	fmt.Printf("annualized: %f%%\n", annualized*100)
+	fmt.Printf("annualized standard deviation: %f%%\n", annualized*100)
 	fmt.Println("current price:", currentPrice)
-	limitPrice, err := determinePrice(annualized, 365, currentPrice, *percent)
+	limitPrice, err := determinePrice(annualized, *days, currentPrice, *percent)
 	checkError(err)
 	shares := float64(*total) / limitPrice
 	diff := shares - float64(*total)/currentPrice
